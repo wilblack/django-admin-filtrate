@@ -62,6 +62,9 @@ class Case(Model):
 * Clone the repo and symlink or copy the "filtrate" folder to your apps folder.
 * Add `filtrate` to your installed apps.
 * Add the "filtrate/templates" folder to your template folders.
+* Create a filter class each field you want to filter on.
+* Add the field name to the apprpriate list_filter in admin.py
+
 
 ### Static files ###
 
