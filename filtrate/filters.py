@@ -138,6 +138,68 @@ class DateRangeFilter(FiltrateFilter):
             'get_params': self._form_duplicate_getparams(form.fields.keys()),
         }))
 
+
+class FloatRangeFilter(FiltrateFilter):
+    
+    class Media():
+        js = (
+            'https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js',
+            'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/i18n/jquery-ui-i18n.min.js',
+        )
+        css = { 'all': ('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/themes/flick/jquery-ui.css',) }
+    
+    def _get_form(self, field_name):
+        """
+        Returns form with from and to fields. The '__alt' fields are alternative
+        fields with the correct non localized dateform needed for Django, 
+        handled by jsTree.
+        """
+        from_name = self.field_name + '__gte' 
+        to_name = self.field_name + '__lte'
+        
+        display_widget = Input(attrs={'class': 'filtrate_float'})
+        #hidden_widget = HiddenInput(attrs={'class': 'filtrate_float_hidden'})
+        def add_fields(fields, name, label):
+            fields[name] = f.FloatField(label=label, 
+                                          widget=display_widget, required=False)
+            #fields[name] = f.FloatField(widget=hidden_widget, required=False)
+        
+        def add_data(data, name, request):
+            value = request.GET.get(name)
+            if value:
+                data[name] = value
+                
+        class FloatRangeForm(f.Form):
+            def __init__(self, *args, **kwargs):
+                super(FloatRangeForm, self).__init__(*args, **kwargs)
+                add_fields(self.fields, from_name, _('From'))
+                add_fields(self.fields, to_name, _('To'))
+                
+        data = {}
+        add_data(data, from_name, self.request)
+        add_data(data, to_name, self.request)
+        return FloatRangeForm(data=data)
+
+    def get_content(self):
+        form = self._get_form(self.field_name)
+        return mark_safe(u"""
+            <script>
+                var filtrate = filtrate || {};
+                filtrate.language_code = '%(language_code)s';
+            </script>
+            <form class="filtrate_floatrange_form" method="get">
+                %(form)s
+            <input type="submit" value="%(submit)s" />
+            %(get_params)s
+            </form>
+        """ % ({
+            'form': form.as_p(),
+            'submit': _('Apply filter'),
+            'language_code': settings.LANGUAGE_CODE[:2],
+            'get_params': self._form_duplicate_getparams(form.fields.keys()),
+        }))
+
+
 class TreeFilter(FiltrateFilter):
     """
     A tree filter for models. Uses the jsTree jQuery plugin found at 
